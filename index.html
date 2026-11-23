@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0e315b">
+<meta name="robots" content="noindex,nofollow">
+<title>Vinculación | Servicio Social · TecNM Matehuala</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<div id="login" class="login-screen hidden">
+  <div class="login-brand"><div class="mark">T</div><span>Tecnológico Nacional de México<small>Campus Matehuala</small></span></div>
+  <main class="login-card">
+    <div class="login-illustration"><span class="illustration-icon">▦</span><div><div class="tiny">ACCESO ADMINISTRATIVO</div><h1>Portal de Vinculación</h1><p>Gestión y seguimiento estadístico de Servicio Social.</p></div></div>
+    <form id="loginForm" autocomplete="on">
+      <label for="usuario">Usuario</label><input id="usuario" name="username" value="vinculacion" autocomplete="username" required>
+      <label for="password">Contraseña</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Introduce tu contraseña" required><button type="button" class="showpass" id="showPassword">Mostrar</button></div>
+      <p id="loginError" class="error hidden" role="alert"></p>
+      <button type="submit" class="btn primary full" id="loginButton">Ingresar al panel <span>→</span></button>
+    </form>
+    <p class="legal">Acceso exclusivo del personal autorizado del Departamento de Vinculación.</p>
+  </main>
+</div>
+<div id="boot" class="boot"><span class="spinner"></span><strong>Verificando acceso al portal…</strong></div>
+<div id="app" class="shell hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="mark">T</div><div>TecNM <small>Campus Matehuala</small></div></div>
+    <div class="sidebar-head">GESTIÓN DE SERVICIO SOCIAL</div>
+    <nav aria-label="Navegación principal">
+      <button data-tab="panel" class="nav active"><span>▦</span> Panel general</button>
+      <button data-tab="expedientes" class="nav"><span>▤</span> Expedientes</button>
+      <button data-tab="reportes" class="nav"><span>▣</span> Reportes</button>
+    </nav>
+    <div class="sidebar-footer"><span class="avatar">V</span><div><strong>Vinculación</strong><small>Responsable del área</small></div></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><button id="menuToggle" class="iconbtn menu-toggle" aria-label="Abrir menú">☰</button><span class="top-crumb">Servicio Social <span>/</span> <strong id="crumb">Panel general</strong></span><div class="top-actions"><span class="online">Fuente: Google Sheets · n8n</span><button id="refresh" class="btn secondary small">↻ Actualizar</button><button id="logout" class="btn subtle small">Salir</button></div></header>
+    <main class="content">
+      <div class="page-heading"><div><div class="eyebrow">TECNM · CAMPUS MATEHUALA</div><h1 id="pageTitle">Panel general</h1><p id="pageSub">Información actualizada del procedimiento de Servicio Social.</p></div><div class="datechip" id="updatedAt">Pendiente de actualización</div></div>
+      <div id="notice" class="notice hidden" role="alert"></div>
+      <section id="view-panel">
+        <div class="metrics" id="metrics"></div>
+        <div class="twocol">
+          <article class="surface"><div class="surface-head"><div><h2>Distribución por etapa</h2><p>Estudiantes registrados según su trámite actual.</p></div><span class="mini-tag">Expedientes</span></div><div id="stageChart" class="chart-list"></div></article>
+          <article class="surface"><div class="surface-head"><div><h2>Estado de documentos</h2><p>Últimas versiones registradas en el sistema.</p></div></div><div class="donut-area"><div id="donut" class="donut"><div><strong id="docCount">0</strong><span>documentos</span></div></div><div id="docLegend" class="legend"></div></div></article>
+        </div>
+        <article class="surface"><div class="surface-head"><div><h2>Resumen de estudiantes</h2><p>Consulta rápida del avance de los expedientes.</p></div><button class="btn secondary small" data-tab="expedientes">Ver expedientes →</button></div><div class="table-scroll"><table><thead><tr><th>Estudiante</th><th>Control</th><th>Etapa</th><th>Horas</th><th>Estado</th></tr></thead><tbody id="summaryRows"></tbody></table></div></article>
+      </section>
+      <section id="view-expedientes" class="hidden">
+        <article class="surface"><div class="surface-head"><div><h2>Expedientes</h2><p>Vista de consulta, sin modificaciones al expediente.</p></div><div class="filters"><input id="search" type="search" placeholder="Buscar alumno o control…" aria-label="Buscar alumno"><select id="stageFilter" aria-label="Filtrar por etapa"><option value="">Todas las etapas</option></select></div></div><div class="table-scroll"><table><thead><tr><th>Estudiante</th><th>Control</th><th>Créditos</th><th>Etapa</th><th>Horas</th><th>Documentos</th><th></th></tr></thead><tbody id="studentsRows"></tbody></table></div></article>
+        <article class="surface detail hidden" id="studentDetail"><div class="surface-head"><div><h2 id="detailName">Expediente</h2><p id="detailMeta"></p></div><button class="btn secondary small" id="closeDetail">Cerrar ×</button></div><div class="detail-grid" id="detailStats"></div><h3>Documentos vigentes</h3><div class="table-scroll"><table><thead><tr><th>Documento</th><th>Periodo</th><th>Versión</th><th>Estado</th><th>Horas verificadas</th></tr></thead><tbody id="detailDocs"></tbody></table></div></article>
+      </section>
+      <section id="view-reportes" class="hidden">
+        <div class="report-layout"><article class="surface report-controls"><span class="report-icon">▣</span><h2>Reporte estadístico de Servicio Social</h2><p>Genera un PDF con los datos actuales de tu panel. No se usa un workflow adicional y no se modifica ningún expediente.</p><label for="reportPeriod">Convocatoria</label><select id="reportPeriod"><option value="todos">Todas las convocatorias</option></select><div class="report-includes"><strong>El archivo incluirá:</strong><div>✓ Resumen de estudiantes y elegibilidad</div><div>✓ Distribución por etapa y estado documental</div><div>✓ Tabla de expedientes y horas registradas</div><div>✓ Fecha y convocatoria del reporte</div></div><p class="footnote">Los documentos validados automáticamente se distinguen de los aceptados institucionalmente.</p><button id="downloadPdf" class="btn primary full">↓ Descargar reporte PDF</button></article><article class="surface report-preview"><div class="paper"><div class="paper-top"><span>TecNM</span><small>CAMPUS MATEHUALA</small></div><div class="paper-stripe"></div><div class="paper-heading">REPORTE ESTADÍSTICO<small>SERVICIO SOCIAL</small></div><div class="paper-meta">Departamento de Vinculación</div><div class="paper-placeholder"><div></div><div></div><div></div></div><div class="paper-chart"><i></i><i></i><i></i><i></i><i></i></div><div class="paper-lines"><span></span><span></span><span></span><span></span></div></div><div class="preview-caption">Vista ilustrativa de la estructura del PDF descargable</div></article></div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="./pdf.js" defer></script><script src="./app.js" defer></script>
+</body></html>
