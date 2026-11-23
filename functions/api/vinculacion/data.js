@@ -1,36 +1,86 @@
-import {json,isAdmin} from '../../_lib/vinculacion-auth.js';
 
-// Cambia esta URL solo si cambia la ruta de producción de WF-05.
-const WF05_URL = 'https://servicio-social.app.n8n.cloud/webhook/ss-vinculacion-panel';
+import { json, isAdmin } from '../../_lib/vinculacion-auth.js';
 
-export async function onRequestGet({request,env}) {
-  if (!(await isAdmin(request,env))) return json({ok:false,error:'Inicia sesión para consultar las estadísticas.'},401);
-  if (!env.N8N_WEBHOOK_KEY || String(env.N8N_WEBHOOK_KEY).length<20)
-    return json({ok:false,error:'Falta N8N_WEBHOOK_KEY en Cloudflare Production.'},503);
-  const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),25000);
+const WF05_URL =
+  'https://servicio-social.app.n8n.cloud/webhook/ss-vinculacion-panel';
+
+export async function onRequestGet({ request, env }) {
+
+  if (!(await isAdmin(request, env))) {
+    return json({
+      ok: false,
+      error: 'Sesion no autorizada.'
+    }, 401);
+  }
+
+  if (!env.N8N_WEBHOOK_KEY) {
+    return json({
+      ok: false,
+      error: 'Falta N8N_WEBHOOK_KEY en Cloudflare.'
+    }, 503);
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
   try {
-    const upstream=await fetch(WF05_URL, {
-      method:'GET',
-      headers:{'X-Automation-Key':env.N8N_WEBHOOK_KEY,'Accept':'application/json'},
-      signal:controller.signal,
-      redirect:'error'
+    console.log('WF05: Iniciando consulta');
+
+    const response = await fetch(WF05_URL, {
+      method: 'GET',
+      headers: {
+        'X-Automation-Key': env.N8N_WEBHOOK_KEY,
+        'Accept': 'application/json'
+      },
+      signal: controller.signal,
+      redirect: 'error'
     });
-    if (!upstream.ok) {
-      const status=upstream.status;
-      return json({ok:false,error:status===401||status===403 ?
-        `n8n rechazó la clave Header Auth (HTTP ${status}). Revisa X-Automation-Key.` :
-        `n8n respondió HTTP ${status}. Verifica workflow activo, URL de producción y ejecución.`,codigo:'WF05_HTTP'},502);
+
+    console.log('WF05: HTTP', response.status);
+
+    if (!response.ok) {
+      return json({
+        ok: false,
+        error: 'n8n respondio HTTP ' + response.status,
+        codigo: 'WF05_HTTP'
+      }, 502);
     }
-    const contentType=upstream.headers.get('content-type')||'';
-    if (!contentType.toLowerCase().includes('json')) return json({ok:false,error:'n8n no devolvió JSON. Revisa Respond to Webhook.'},502);
-    const raw=await upstream.text();
-    if (raw.length>8_000_000) return json({ok:false,error:'La respuesta de n8n es demasiado grande.'},502);
-    const payload=JSON.parse(raw);
-    if (payload?.ok!==true || !Array.isArray(payload.estudiantes) || !Array.isArray(payload.expedientes) || !Array.isArray(payload.documentos))
-      return json({ok:false,error:'El JSON de n8n no contiene ok:true, estudiantes, expedientes y documentos como listas.'},502);
-    return json({ok:true,fetched_at:payload.fetched_at||new Date().toISOString(),estudiantes:payload.estudiantes,expedientes:payload.expedientes,documentos:payload.documentos});
-  } catch(error) {
-    return json({ok:false,error:error?.name==='AbortError'?'n8n tardó demasiado en responder (25 segundos).':'No fue posible conectar con n8n o leer su JSON.'},504);
-  } finally { clearTimeout(timeout); }
+
+    const data = await response.json();
+
+    if (
+      data?.ok !== true ||
+      !Array.isArray(data.estudiantes) ||
+      !Array.isArray(data.expedientes) ||
+      !Array.isArray(data.documentos)
+    ) {
+      return json({
+        ok: false,
+        error: 'n8n devolvio un JSON incorrecto.',
+        codigo: 'WF05_JSON'
+      }, 502);
+    }
+
+    console.log('WF05: Consulta exitosa');
+
+    return json(data);
+
+  } catch (error) {
+
+    console.error('WF05_ERROR', {
+      name: error?.name,
+      message: error?.message,
+      cause: error?.cause?.message
+    });
+
+    return json({
+      ok: false,
+      error: 'Error al conectar Cloudflare con n8n.',
+      codigo: 'WF05_FETCH_ERROR',
+      tipo: error?.name || 'UnknownError'
+    }, 502);
+
+  } finally {
+    clearTimeout(timeout);
+  }
 }
